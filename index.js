@@ -37,7 +37,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const options = {
         // Include only the `title` and `imdb` fields in the returned document
-        projection: { title: 1, price: 1, service_id: 1 },
+        projection: { title: 1, price: 1, service_id: 1, img: 1 },
       };
       const result = await serviceCollection.findOne(query, options);
       res.send(result);
@@ -58,6 +58,13 @@ async function run() {
       const booking = req.body;
       console.log(booking);
       const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    app.delete("/booking/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(query);
       res.send(result);
     });
 
