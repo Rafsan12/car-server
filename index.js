@@ -10,10 +10,10 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(
   cors({
     origin: [
-      // "http://localhost:5173",
+      "http://localhost:5173",
       "https://cars-two-iota.vercel.app",
-      "https://cars-git-main-rafsan-s-projects.vercel.app",
-      "https://cars-eo00mbvwj-rafsan-s-projects.vercel.app",
+      // "https://cars-git-main-rafsan-s-projects.vercel.app",
+      // "https://cars-eo00mbvwj-rafsan-s-projects.vercel.app",
     ],
     credentials: true,
   })
@@ -58,7 +58,11 @@ const verifyToken = async (req, res, next) => {
     next(); // Proceed to the next middleware
   });
 };
-
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -73,19 +77,15 @@ async function run() {
         expiresIn: "1h",
       });
       console.log(token);
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        })
-        .send({ success: true });
+      res.cookie("token", token, cookieOptions).send({ success: true });
     });
 
     app.post("/logout", async (req, res) => {
       const user = req.body;
       console.log("Login User: ", user);
-      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+      res
+        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+        .send({ success: true });
     });
 
     // collection
