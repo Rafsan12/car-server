@@ -10,8 +10,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "https://cars-two-iota.vercel.app ",
+      // "http://localhost:5173",
+      "https://cars-two-iota.vercel.app",
       "https://cars-git-main-rafsan-s-projects.vercel.app",
       "https://cars-eo00mbvwj-rafsan-s-projects.vercel.app",
     ],
