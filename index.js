@@ -1,12 +1,20 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://cars-two-iota.vercel.app/ "],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0veqj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -19,15 +27,67 @@ const client = new MongoClient(uri, {
   },
 });
 
+const logger = async (req, res, next) => {
+  console.log("called", req.host, req.originalUrl);
+  next();
+};
+
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token; // Extract token from cookies
+  console.log("Value of token:", token);
+
+  if (!token) {
+    // If no token is found, respond with 401 Unauthorized
+    return res.status(401).send({ message: "Not Authorized" });
+  }
+
+  jwt.verify(token, process.env.Access_Token_secret, (err, decoded) => {
+    if (err) {
+      // Log the error and respond with 401 Unauthorized if verification fails
+      console.log("JWT Verification Error:", err);
+      return res.status(401).send({ message: "Not Authorized" });
+    }
+
+    console.log("Value of decoded token:", decoded);
+    req.user = decoded; // Optionally attach decoded token to `req` object for later use
+    next(); // Proceed to the next middleware
+  });
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    // auth jws
+    // console.log("Access Token Secret:", process.env.Access_Token_secret);
+    app.post("/jwt", logger, async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, process.env.Access_Token_secret, {
+        expiresIn: "1h",
+      });
+      console.log(token);
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
+
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      console.log("Login User: ", user);
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
+
+    // collection
     const serviceCollection = client.db("carDoctor").collection("services");
     const bookingCollection = client.db("carDoctor").collection("bookings");
 
-    app.get("/services", async (req, res) => {
+    // services api
+    app.get("/services", logger, async (req, res) => {
       const cursor = serviceCollection.find();
       const result = await cursor.toArray();
       res.send(result);
@@ -44,8 +104,10 @@ async function run() {
     });
 
     //  booking
-    app.get("/booking", async (req, res) => {
+    app.get("/booking", logger, verifyToken, async (req, res) => {
       console.log(req.query.email);
+      // console.log("Token: ", req.cookies.token);
+      console.log("for valid token: ", req.user);
       let query = {};
       if (req.query?.email) {
         query = { email: req.query.email };
