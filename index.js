@@ -9,7 +9,12 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://cars-two-iota.vercel.app/ "],
+    origin: [
+      "http://localhost:5173",
+      "https://cars-two-iota.vercel.app ",
+      "https://cars-git-main-rafsan-s-projects.vercel.app",
+      "https://cars-eo00mbvwj-rafsan-s-projects.vercel.app",
+    ],
     credentials: true,
   })
 );
@@ -57,7 +62,7 @@ const verifyToken = async (req, res, next) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     // auth jws
     // console.log("Access Token Secret:", process.env.Access_Token_secret);
@@ -131,7 +136,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
